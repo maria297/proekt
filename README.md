@@ -1,93 +1,143 @@
-# MongoDB Bookstore
+# MongoDB проект: Филмова база данни
+## Общо описание
+Този проект представлява MongoDB база данни, която моделира информация за филми, актьори, режисьори, потребители и ревюта. Целта е да се покаже как се използват основните операции в MongoDB: CRUD (Create, Read, Update, Delete) и Aggregation Pipeline. Базата е създадена ръчно чрез файл insert.js, а заявки за работа с нея са записани в queries.js.
 
-## Описание
-Този проект представлява база данни за онлайн книжарница, която позволява управление на книги, автори, клиенти, поръчки и рецензии.
+### Проектът е изпълнен по задание с:
+-поне 5 колекции
+-пълни примери за вмъкване на данни (insert.js)
+-заявки за четене, обновяване, изтриване и агрегиране (queries.js)
 
-## Структура на базата данни
+## Структура на проекта
+  ```pgsql
+movie-database-project/
+├── insert.js        # Вмъкване на документи във всяка колекция
+├── queries.js       # Заявки (read, update, delete, aggregate)
+└── README.md        # Документация и инструкции
+  ``` 
+## Колекции и структура
+1. **movies** – информация за филмите
+  ```json
+{
+  title: String,
+  genre: String,
+  year: Number,
+  rating: Number,
+  actors: [String],
+  director: String
+}
+  ```
+2. **actors** – информация за актьорите
+  ```json
 
-### Колекции
+{
+  name: String,
+  dob: Date,
+  nationality: String,
+  movies: [String]
+}
+  ```
+3. **directors** – информация за режисьорите
+  ```json
+{
+  name: String,
+  nationality: String,
+  movies: [String]
+}
+  ```
+4. **users** – потребители на приложението
+  ```json
+{
+  username: String,
+  email: String,
+  favorites: [String]
+}
+  ```
+5. **reviews** – потребителски ревюта
+  ```json
+{
+  user: String,
+  movie: String,
+  text: String,
+  rating: Number,
+  date: Date
+}
+  ```
+### insert.js – Вмъкване на данни
+-Файлът insert.js съдържа:
+-db.collection.insertMany([...]) за всички 5 колекции
+-Използвани типове: низове, числа, дати (ISODate), масиви
+-Всяка колекция съдържа по 10 записа с реалистични данни
+-Примери за използване на insert:
 
-1. **books**
-   - _id: ObjectId
-   - title: String
-   - author: ObjectId (референция към authors)
-   - isbn: String (уникален)
-   - price: Number
-   - category: String
-   - stock: Number
-   - publishedYear: Number
+  ```js
 
-2. **authors**
-   - _id: ObjectId
-   - name: String
-   - biography: String
-   - birthDate: Date
-   - nationality: String
+ db.movies.insertMany([...])
 
-3. **customers**
-   - _id: ObjectId
-   - name: String
-   - email: String (уникален)
-   - address: Object {street, city, country, postalCode}
-   - phone: String
-   - registrationDate: Date
+ db.actors.insertMany([ { name: ..., dob: ISODate("..."), ... } ])
+  ```
+ ### queries.js – Заявки и агрегиране
+-Четене (Read)
+-find() – връща всички документи
+-find({ поле: стойност }) – филтриране по критерии
+-Условия: $gt, $lt, $exists, регулярни изрази (/@mail\.com$/)
 
-4. **orders**
-   - _id: ObjectId
-   - customerId: ObjectId (референция към customers)
-   - books: Array of Objects {bookId, quantity, price}
-   - totalAmount: Number
-   - orderDate: Date
-   - status: String
+  ```js
 
-5. **reviews**
-   - _id: ObjectId
-   - bookId: ObjectId (референция към books)
-   - customerId: ObjectId (референция към customers)
-   - rating: Number
-   - comment: String
-   - date: Date
+db.movies.find({ genre: "Sci-Fi" })
 
-## Инсталация и стартиране
 
-1. Инсталирайте MongoDB Community Edition от [официалния сайт](https://www.mongodb.com/try/download/community)
+db.actors.find({ nationality: "USA" })
 
-2. Стартирайте MongoDB сървъра:
-```bash
-mongod
-```
+db.users.find({ email: /@mail\.com$/ })
+  ```
+### Обновяване (Update)
+-updateOne({ условие }, { $оператор: { поле: стойност } })
+-Използвани оператори: $set, $push, $addToSet
 
-3. Изпълнете скриптовете в следния ред:
-```bash
-mongosh < create_db.js
-mongosh < insert.js
-mongosh < queries.js
-```
+  ```js
 
-## Файлове
+db.movies.updateOne({ title: "Titanic" }, { $set: { rating: 8.3 } })
 
-- `create_db.js` - създава базата данни, колекциите и индексите
-- `insert.js` - вмъква примерни данни във всички колекции
-- `queries.js` - съдържа примери за CRUD операции и агрегации
 
-## Примери за заявки
+db.actors.updateOne({ name: "Tom Hanks" }, { $push: { movies: "Cast Away" } })
+  ```
+### Изтриване (Delete)
+-deleteOne({ условие }) – трие първия съвпадащ документ
 
-### READ операции
-- Извличане на всички книги
-- Филтриране на книги по категория
-- Филтриране на клиенти по град
-- Филтриране на поръчки по статус
+  ```js
 
-### UPDATE операции
-- Актуализиране на цената на книга
-- Актуализиране на статуса на поръчка
+db.directors.deleteOne({ name: "Steven Spielberg" })
+  ```
+### Агрегиране (Aggregate)
+-aggregate([...]) с етапи $group, $project, $sort
+-Изчисления: брой, среден рейтинг, брой филми на режисьори
 
-### DELETE операции
-- Изтриване на рецензия
-- Изтриване на поръчка
+  ```js
 
-### AGGREGATE операции
-- Групиране на книги по категория
-- Намиране на най-скъпите книги
-- Агрегация на поръчки по клиент
-- Изчисляване на среден рейтинг на книгите 
+db.movies.aggregate([
+  { $group: { _id: "$genre", avgRating: { $avg: "$rating" } } }
+])
+
+
+db.reviews.aggregate([
+  { $group: { _id: "$movie", count: { $sum: 1 } } }
+])
+
+
+db.directors.aggregate([
+  { $project: { name: 1, numMovies: { $size: "$movies" } } },
+  { $sort: { numMovies: -1 } }
+])
+  ```
+## Стартиране на проекта
+-За стартиране на проекта съм използвала MongoDB Atlas и MongoDB Compass. Това ми позволи да създам и управлявам базата данни онлайн и да визуализирам данните чрез удобен графичен интерфейс.
+
+### Процес на стартиране:
+-Създадох безплатен акаунт в MongoDB Atlas.
+-Създадох нов клъстер (Cluster) в облака, който служи като сървър за базата ми данни.
+-Конфигурирах потребителско име и парола за достъп и разреших достъп от IP адрес 0.0.0.0/0 (всички IP-та), за да мога да се свържа от моя компютър.
+-Копирах връзката (URI) към клъстера и я използвах в приложението MongoDB Compass – десктоп клиент, който инсталирах локално.
+-В MongoDB Compass създадох нова база данни с име movieDB и колекции според структурата на проекта.
+-Използвах функцията „Insert Many“ в MongoDB Compass, за да заредя данните от файла insert.js.
+-Изпълних необходимите заявки за четене, обновяване, изтриване и агрегиране на данни директно през MongoDB Compass, като използвах командите от queries.js.
+-Този подход е удобен за бързо стартиране и тестване на базата данни, без да се налага инсталиране и конфигуриране на MongoDB сървър локално.
